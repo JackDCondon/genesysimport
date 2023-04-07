@@ -49,13 +49,13 @@ async function myCallback(html)
     var moduleName = jsonBook._meta.source.full;
     ui.notifications.info(`Value: ${moduleName}`);
 
-   // await CreateSkills(jsonBook);
- //   await CreateWepQuals(jsonBook);
-  //  await CreateTalents(jsonBook);
- //   await CreateGearArmorWeapons(jsonBook);
- //   await CreateCareers(jsonBook);
- //   await CreateArchetypes(jsonBook);
-   await CreateNPCs(jsonBook);
+    await CreateSkills(jsonBook);
+    await CreateWepQuals(jsonBook);
+    await CreateTalents(jsonBook);
+    await CreateGearArmorWeapons(jsonBook);
+    await CreateCareers(jsonBook);
+    await CreateArchetypes(jsonBook);
+    await CreateNPCs(jsonBook);
 
 }
 

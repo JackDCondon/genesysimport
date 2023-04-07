@@ -31,8 +31,8 @@
     "styles/module.css"
   ],
   "url": "https://github.com/JackDCondon/genesysimport",
-  "manifest": "https://github.com/JackDCondon/genesysimport/releases/download/1.5.0/module.json",
-  "download": "https://github.com/JackDCondon/genesysimport/releases/download/1.5.0/module.zip",
+  "manifest": "https://github.com/JackDCondon/genesysimport/releases/download/1.6.0/module.json",
+  "download": "https://github.com/JackDCondon/genesysimport/releases/download/1.6.0/module.zip",
   "license": "LICENSE",
   "readme": "README.md",
   "media": [
