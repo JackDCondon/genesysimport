@@ -933,8 +933,11 @@ async function CreateOrUpdateItem(newitem)
       else
      {
          //FoundItem.system.description = "UPDATED YAY WOOOO";
-         let updates = [{_id: foundItem.id , system: newitem.systemData }];
-         const updated = await Item.updateDocuments(updates);
+        const updateitem = game.items.get(foundItem.id);
+        await updateitem.update({system: newitem.system});
+
+         //let updates = [{_id: foundItem.id , system: newitem.systemData }];
+         //const updated = await Item.updateDocuments(updates);
          //FoundItem.update();
          
      }
@@ -992,12 +995,49 @@ function formatDesc(arrayOfDescriptions) {
         //  Desc = System.Text.RegularExpressions.Regex.Replace(Desc, @"\{@(skill|talent|quality|gear) (.*?)\}", "@Item[$2]");
         //     Desc = System.Text.RegularExpressions.Regex.Replace(Desc, @"\{@(symbols) (.*?)\}", "<span style=\"font-family: Genesys Symbols\">$2</span>");
 
-        const reg1 = /\{@(skill|talent|quality|gear) (.*?)\}/g;
+
+        //{@title Android: Shadow of the Beanstalk}
+        desc = desc.replace(/\{@title (.*?)\}/g, "@PDF[$1]{$1}");
+
+
+
+        //{@dice setback}
+        //{@dice setback|2}
+        //{@dice boost}
+        //{@dice boost|2}
+        desc = desc.replace(/\{@dice (\w*)\|?(\d)?\}/g, "<b>$2 $1 dice</b>");
+
+
+        // \{@dice (\w*)\|?(\d)?\} //T
+
+        //{@difficulty hard|Perception}
+        //{@difficulty average|leadership}
+        desc = desc.replace(/\{@difficulty (\w*)\|([\s\S]*)\}/g, "<b>$1</b> @Item[$2] check");
+        desc = desc.replace(/\{@difficulty (\w*)\}/g, "<b>$1</b> check");
+
+
+
+        desc = desc.replace(/\|\|(\w)*}/g, "}"); //REMOVE soruce from item ref 
+        
+
+
+
+        const reg1 = /\{@(skill|talent|quality|gear|rule) (.*?)\}/g;
         const replace1 = "@Item[$2]";
         const reg2 = /\{@(symbols) (.*?)\}/g;
         const replace2 = "<span style=\"font-family: Genesys Symbols\">$2</span>";
+
+
         desc = desc.replace(reg1, replace1);
         desc = desc.replace(reg2, replace2);
+
+        //{@i Your character must have purchased the @Item[Inspiring Rhetoric] talent to benefit from this talent}
+        desc = desc.replace(/\{@i ([\s\S]*)\}/g, "<b>$1</b>");
+
+
+        //{@table I.6-3: Spending Threat and Despair in Combat}
+        desc = desc.replace(/\{@table (.*?)\}/g, "@PDF[Genesys Core Rulebook]{$1}");
+
         desc = "<p>" + desc + "</p>";
         description += desc;
     }
