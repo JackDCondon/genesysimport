@@ -49,13 +49,13 @@ async function myCallback(html)
     var moduleName = jsonBook._meta.source.full;
     ui.notifications.info(`Value: ${moduleName}`);
 
-    await CreateSkills(jsonBook);
-    await CreateWepQuals(jsonBook);
-    await CreateTalents(jsonBook);
-    await CreateGearArmorWeapons(jsonBook);
-    await CreateCareers(jsonBook);
-    await CreateArchetypes(jsonBook);
-    await CreateNPCs(jsonBook);
+   // await CreateSkills(jsonBook);
+ //   await CreateWepQuals(jsonBook);
+  //  await CreateTalents(jsonBook);
+ //   await CreateGearArmorWeapons(jsonBook);
+ //   await CreateCareers(jsonBook);
+ //   await CreateArchetypes(jsonBook);
+   await CreateNPCs(jsonBook);
 
 }
 
@@ -334,7 +334,9 @@ async function CreateNPCs(bookJson)
         }
 
         newActor = await Actor.create(newActorData);
-        const createditems = await Item.createDocuments(grantedItems, { parent: newActor });
+        //const createditems = await Item.createDocuments(grantedItems, { parent: newActor });
+
+        const createditems = await newActor.createEmbeddedDocuments('Item', grantedItems);
 
 
         for (const CreatedItem of createditems)
@@ -346,9 +348,9 @@ async function CreateNPCs(bookJson)
                 });
                 if (foundgranteditems)
                 {
-                    CreatedItem.system.rank = foundgranteditems.system.rank;
+                    //CreatedItem.system.rank = foundgranteditems.system.rank;
                 }
-                await CreatedItem.update();
+                await CreatedItem.update({'system.rank' : foundgranteditems.system.rank});
             }
         }
     
