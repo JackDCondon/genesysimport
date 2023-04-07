@@ -1,8 +1,8 @@
 {
-  "id": "module",
-  "title": "New Module",
-  "description": "",
-  "version": "#{VERSION}#",
+  "id": "genesysimport",
+  "title": "genesys import",
+  "description": "genesysimport",
+  "version": "1.0",
   "library": "false",
   "manifestPlusVersion": "1.2.0",
   "compatibility": {
