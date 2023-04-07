@@ -37,7 +37,7 @@
       "path": "languages/en.json"
     }
   ],
-  "url": "#{URL}#",
+  "url": "https://github.com/JackDCondon/genesysimport",
   "manifest": "https://github.com/JackDCondon/genesysimport/releases/download/1.3.0/module.json",
   "download": "https://github.com/JackDCondon/genesysimport/releases/download/1.3.0/module.zip",
   "license": "LICENSE",
