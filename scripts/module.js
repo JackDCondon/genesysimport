@@ -4,7 +4,7 @@ Hooks.once('init', async function() {
 
 });
 
-
+var filtergenre;
 
 Hooks.on("renderSidebarTab", async (app, html) => 
 {
@@ -13,7 +13,9 @@ Hooks.on("renderSidebarTab", async (app, html) =>
         let button = $(`<div class="footer-actions action-buttons flexrow"><button class="create-folder"><i class="fas fa-file-import"></i> Import Genesys JSON </button></div>`)
         button.on('click', async () => 
         {
-            const myContent = `Value:<input id="myInputID" type="text" value="json here" />`;
+            const myContent = `<p>Json:<input id="JsonInputID" type="text" value="" /></p>
+            <p>ModuleName:<input id="ModuleNameID" type="text" value="" /></p>
+            <p>Filter:<input id="FilterID" type="text" value="all,science-fiction,android,science fiction" /></p>`;
 
             new Dialog({
             title: "My Dialog Title",
@@ -44,7 +46,14 @@ Hooks.once('ready', async function() {
 
 async function myCallback(html) 
 {
-    const jsonstring = html.find("input#myInputID").val();
+    const jsonstring = html.find("input#JsonInputID").val();
+    const filterstring = html.find("input#FilterID").val();
+
+    filtergenre =  filterstring.split(',');
+
+
+
+
     var jsonBook = JSON.parse(jsonstring);
     var moduleName = jsonBook._meta.source.full;
     ui.notifications.info(`Value: ${moduleName}`);
@@ -60,13 +69,44 @@ async function myCallback(html)
 }
 
 
+
+async function filterArray(theArray) 
+{
+    let genrefilter = filtergenre;
+    if (genrefilter.length <= 0)
+    {
+        return theArray;
+    }
+
+    return await theArray.filter(InItem => 
+    {
+        if (InItem.settings == undefined)
+        {
+            return false;
+        }
+        for (let settingObj of InItem.settings)
+        {
+            const SettingName = settingObj.name;
+            for (let genre of genrefilter)
+            {
+                if (genre.toLowerCase() == SettingName.toLowerCase())
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    });
+}
+
+
 async function CreateNPCs(bookJson) 
 {
     ui.notifications.info(`Running NPC Importer`);
 
 
     let npcs = bookJson.adversary;
-    
+    npcs = await filterArray(npcs);
     let moduleName = bookJson._meta.source.full;
     
     
@@ -414,7 +454,7 @@ async function CreateArchetypes(bookJson)
 
     let archetypes = bookJson.archetype; 
     let moduleName = bookJson._meta.source.full;
-    
+    archetypes = await filterArray(archetypes);
     console.log("archetype AMOUNT:" + archetypes.length);
     
     for (let qual of archetypes) {
@@ -536,7 +576,7 @@ async function CreateCareers(bookJson)
     let careers = bookJson.career;
     
     let moduleName = bookJson._meta.source.full;
-    
+    careers = await filterArray(careers);
     
     console.log("Careers AMOUNT:" + careers.length);
     
@@ -596,6 +636,9 @@ async function CreateGearArmorWeapons(bookJson)
     let moduleName = bookJson._meta.source.full;
 
     let gearList = bookJson.gear;//all the gear
+
+    gearList = await filterArray(gearList);
+
     let armorList = gearList.filter(gear => gear.type == "armor");//extract armor
     let weaponList = gearList.filter(gear => gear.type == "weapon");//extract weapon
     gearList = gearList.filter(gear => gear.type == "gear");//remove everything that isn't gear
@@ -761,6 +804,8 @@ async function CreateTalents(bookJson)
     let talents = bookJson.talent;
     let moduleName = bookJson._meta.source.full;
 
+
+    talents = await filterArray(talents);
     for(let qual of talents)
     {
         
@@ -855,6 +900,8 @@ async function CreateSkills(json)
 {
     let skills = json.skill;
     var moduleName = json._meta.source.full;
+
+    skills = await filterArray(skills);
 
     console.log("SKILL AMOUNT:" + skills.length);
     for (let qual of skills) {
