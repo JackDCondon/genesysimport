@@ -5,6 +5,9 @@ Hooks.once('init', async function() {
 });
 
 var filtergenre;
+var rootfolderItem;
+var rootfolderActor;
+
 
 Hooks.on("renderSidebarTab", async (app, html) => 
 {
@@ -14,7 +17,7 @@ Hooks.on("renderSidebarTab", async (app, html) =>
         button.on('click', async () => 
         {
             const myContent = `<p>Json:<input id="JsonInputID" type="text" value="" /></p>
-            <p>ModuleName:<input id="ModuleNameID" type="text" value="" /></p>
+            <p>RootFolder:<input id="FolderNameID" type="text" value="" /></p>
             <p>Filter:<input id="FilterID" type="text" value="all,science-fiction,android,science fiction" /></p>`;
 
             new Dialog({
@@ -48,10 +51,17 @@ async function myCallback(html)
 {
     const jsonstring = html.find("input#JsonInputID").val();
     const filterstring = html.find("input#FilterID").val();
+    const rootfolderfromhtml = html.find("input#FolderNameID").val();
 
     filtergenre =  filterstring.split(',');
 
-
+    rootfolderItem = null;
+    rootfolderActor = null;
+    if (rootfolderfromhtml != "")
+    {
+        rootfolderItem = await createOutputFolder(rootfolderfromhtml);
+        rootfolderActor = await createOutputFolder(rootfolderfromhtml, true);
+    }
 
 
     var jsonBook = JSON.parse(jsonstring);
@@ -124,7 +134,7 @@ async function CreateNPCs(bookJson)
             description = formatDesc(npc.description);
         }
 
-        const folderID = await createOutputFolder("NPCs", true);
+        const folderID = await createOutputFolder("NPCs", true, rootfolderActor);
 
         const foundactor = game.actors.find(f => {
             if (f.folder === null) return false
@@ -341,6 +351,9 @@ async function CreateNPCs(bookJson)
     
     
         //console.log("granted Items", grantedItems);
+
+        const strainTH = (npc.derived.strain == undefined ) ? 0 : npc.derived.strain;
+        const woundsTH = (npc.derived.wounds == undefined ) ? 0 : npc.derived.wounds;
     
         let systemData = {
             description: description,
@@ -349,8 +362,8 @@ async function CreateNPCs(bookJson)
             soak: npc.derived.soak,
             defense: { melee: npc.derived.defense[0], ranged: npc.derived.defense[1] },
             groupSize: 1,
-            wounds: { value: 0, threshold: npc.derived.wounds },
-            strain: { value: 0, threshold: npc.derived.strain }
+            wounds: { value: 0, max: woundsTH },
+            strain: { value: 0, max: strainTH }
         };
     
         let newActorData = {
@@ -465,7 +478,7 @@ async function CreateArchetypes(bookJson)
         let description = formatDesc(qual.description);
     
     
-        let folderID = await createOutputFolder("Archetypes");
+        let folderID = await createOutputFolder("Archetypes", false, rootfolderItem);
         
         
         let characteristics = qual.characteristics;
@@ -585,7 +598,7 @@ async function CreateCareers(bookJson)
     
         let soruce = getSource(moduleName, qual.page);
         let description = formatDesc(qual.description);
-        let folderID = await createOutputFolder("Careers");
+        let folderID = await createOutputFolder("Careers", false, rootfolderItem);
         
     
         let careerSkills = [];
@@ -641,16 +654,18 @@ async function CreateGearArmorWeapons(bookJson)
 
     let armorList = gearList.filter(gear => gear.type == "armor");//extract armor
     let weaponList = gearList.filter(gear => gear.type == "weapon");//extract weapon
-    gearList = gearList.filter(gear => gear.type == "gear");//remove everything that isn't gear
+    let specialAbility = gearList.filter(gear => gear.type == "g-mod" || gear.type == "cybernetic");//extract specialAbility
+    gearList = gearList.filter(gear => gear.type == "gear" || gear.type == "g-mod" || gear.type == "cybernetic");//remove everything that isn't gear
 
 
+    let equipmentFolderID = await createOutputFolder("Equipment", false, rootfolderItem);
 
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     ui.notifications.info(`Started Weapon Importer`);
     for (let weaponItem of weaponList) {
 
-        let folderID = await createOutputFolder("Weapons");
+        let folderID = await createOutputFolder("Weapons", false, equipmentFolderID);
 
         let source = getSource(moduleName, weaponItem.page);
         let description = formatDesc(weaponItem.description);
@@ -716,7 +731,7 @@ async function CreateGearArmorWeapons(bookJson)
 
 
 
-        let folderID = await createOutputFolder("Armor");
+        let folderID = await createOutputFolder("Armor", false, equipmentFolderID);
 
         let source = getSource(moduleName, armorItem.page);
         let description = formatDesc(armorItem.description);
@@ -760,7 +775,26 @@ async function CreateGearArmorWeapons(bookJson)
 
     for (let gearItem of gearList) {
 
-        let folderID = await createOutputFolder("Gear");
+
+        let subfoldername = "Gear";
+        if (gearItem.type != "gear")
+        {
+            if (gearItem.type == "g-mod") 
+            {
+                subfoldername = "G Mods" 
+            } 
+            else if (gearItem.type == "cybernetic") 
+            {
+                
+                subfoldername = "Cybernetics";
+            } 
+            else
+            {
+                subfoldername = "Other";
+            }
+        }
+
+        let folderID = await createOutputFolder(subfoldername, false, equipmentFolderID);
 
         let source = getSource(moduleName, gearItem.page);
         let description = formatDesc(gearItem.description);
@@ -793,6 +827,46 @@ async function CreateGearArmorWeapons(bookJson)
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
 
+
+    ui.notifications.info(`Started Special Abilitys Importer`);
+
+    for (let sAbility of specialAbility) {
+
+
+        let parentFolder = await createOutputFolder("Special Abilitys", false, rootfolderItem);
+
+        let subfoldername = "Other";
+        if (sAbility.type == "g-mod") subfoldername = "G Mods";
+        if (sAbility.type == "cybernetic") subfoldername = "Cybernetics";
+
+        let folderID = await createOutputFolder(subfoldername, false, parentFolder);
+
+        let source = getSource(moduleName, sAbility.page);
+        let description = formatDesc(sAbility.description);
+
+        let systemData = {
+            description: description,
+            source: source
+        }
+
+        const abilityName = sAbility.name + " Mod";
+
+        let newItemData = {
+            name: abilityName,
+            type: "ability",
+            img: "icons/commodities/tech/cog-brass.webp",
+            system: systemData,
+            folder: folderID
+        };
+
+        await CreateOrUpdateItem(newItemData, folderID);
+
+    }
+
+    ui.notifications.info(`Finished Special Abilitys Importer`);
+
+
+
 }
 
 
@@ -815,7 +889,7 @@ async function CreateTalents(bookJson)
         let activation = FindActervation(qual.activation);
 
         
-        let folderID = await createOutputFolder("Talents");
+        let folderID = await createOutputFolder("Talents", false, rootfolderItem);
 
         
         
@@ -862,7 +936,7 @@ async function CreateWepQuals(bookJson )
         let activation = qual.activation;
     
         
-        let folderID = await createOutputFolder("Weapon Qualities");
+        let folderID = await createOutputFolder("Weapon Qualities", false, rootfolderItem);
     
         
         
@@ -912,7 +986,7 @@ async function CreateSkills(json)
         let description = formatDesc(qual.description);
     
     
-        let folderID = await createOutputFolder("Skills");
+        let folderID = await createOutputFolder("Skills", false, rootfolderItem);
         
         let systemData = {
             description: description,
@@ -1069,7 +1143,7 @@ function formatDesc(arrayOfDescriptions) {
 
 
 
-        const reg1 = /\{@(skill|talent|quality|gear|rule) (.*?)\}/g;
+        const reg1 = /\{@(skill|talent|quality|gear|rule|optionFeature) (.*?)\}/g;
         const replace1 = "@Item[$2]";
         const reg2 = /\{@(symbols) (.*?)\}/g;
         const replace2 = "<span style=\"font-family: Genesys Symbols\">$2</span>";
@@ -1085,6 +1159,15 @@ function formatDesc(arrayOfDescriptions) {
         //{@table I.6-3: Spending Threat and Despair in Combat}
         desc = desc.replace(/\{@table (.*?)\}/g, "@PDF[Genesys Core Rulebook]{$1}");
 
+
+        //{@b Models Include:}  
+        desc = desc.replace(/\{@b ([\s\S]*)\}/g, "<b>$1</b>");
+
+         //{@charactieristic Brawn}
+
+         desc = desc.replace(/\{@charactieristic ([\S]*)\}/g, "<b>$1</b>");
+
+
         desc = "<p>" + desc + "</p>";
         description += desc;
     }
@@ -1092,19 +1175,30 @@ function formatDesc(arrayOfDescriptions) {
 }
 
 
-async function createOutputFolder(nameInput, isActor = false) {
+async function createOutputFolder(nameInput, isActor = false, parentID = null) {
     let outputFolder;
     let name = nameInput;
     let type = isActor? "Actor":"Item";
-    if (!game.folders.find(f => f.name === name)) {
+
+    outputFolder = game.folders.find(f => 
+    {
+        if (f.name === name && f.type == type)
+        {
+            if (f.folder == undefined || f.folder == null) return true;
+            if (f.folder.id == undefined || f.folder.id == null) return true
+            return (f.folder.id == parentID);
+        }
+    });
+
+    if (!outputFolder) 
+    {
         outputFolder = await Folder.create({
             'name': name,
             'type': type,
-            'parent': null
+            'parent': parentID
         });
         ui.notifications.info(`Created Wep Qual Folder`);
-    } else {
-        outputFolder = game.folders.find(f => f.name === name);
     }
+
     return outputFolder.id;
 }
